@@ -172,7 +172,7 @@
     <ClInclude Include="..\Solver\Common.h" />
     <ClInclude Include="..\Solver\Config.h" />
     <ClInclude Include="..\Solver\CsvReader.h" />
-    <ClInclude Include="..\Solver\GateAssignment.pb.h" />
+    <ClInclude Include="..\Solver\GraphColoring.pb.h" />
     <ClInclude Include="..\Solver\LogSwitch.h" />
     <ClInclude Include="..\Solver\PbReader.h" />
     <ClInclude Include="..\Solver\Problem.h" />
@@ -183,7 +183,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Solver\CsvReader.cpp" />
-    <ClCompile Include="..\Solver\GateAssignment.pb.cc" />
+    <ClCompile Include="..\Solver\GraphColoring.pb.cc" />
     <ClCompile Include="..\Solver\Solver.cpp" />
     <ClCompile Include="..\Solver\Utility.cpp" />
     <ClCompile Include="Main.cpp" />

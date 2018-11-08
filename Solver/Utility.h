@@ -4,8 +4,8 @@
 /// note  : 1.	
 ////////////////////////////////
 
-#ifndef SMART_SZX_GATE_ASSIGNMENT_UTILITY_H
-#define SMART_SZX_GATE_ASSIGNMENT_UTILITY_H
+#ifndef SMART_SZX_GRAPH_COLORING_UTILITY_H
+#define SMART_SZX_GRAPH_COLORING_UTILITY_H
 
 
 #include "Config.h"
@@ -746,7 +746,63 @@ public:
     }
 };
 
+
+class Floyd {
+public:
+    // find shortest paths between each pair of nodes.
+    template<typename Weight = Length>
+    static void findAllPairsPaths_asymmetric(Arr2D<Weight> &adjMat) {
+        ID nodeNum = adjMat.size1();
+
+        for (ID mid = 0; mid < nodeNum; ++mid) {
+            auto midVec = adjMat[mid];
+            for (ID src = 0; src < nodeNum; ++src) {
+                auto srcVec = adjMat[src];
+                for (ID dst = 0; dst < nodeNum; ++dst) {
+                    Weight w = srcVec[mid] + midVec[dst];
+                    if (w < srcVec[dst]) { srcVec[dst] = w; }
+                }
+            }
+        }
+    }
+
+    // find shortest paths between each pair of nodes on undirected graph, i.e., the adjMat is symmetric (adjMat[i][j] == adjMat[j][i]).
+    // https://cs.stackexchange.com/questions/7644/what-is-the-fastest-algorithm-for-finding-all-shortest-paths-in-a-sparse-graph
+    // https://stackoverflow.com/questions/2037735/optimise-floyd-warshall-for-symmetric-adjacency-matrix
+    template<typename Weight = Length>
+    static void findAllPairsPaths_symmetric(Arr2D<Weight> &adjMat) {
+        ID nodeNum = adjMat.size1();
+
+        for (ID mid = 0; mid < nodeNum; ++mid) {
+            auto midVec = adjMat[mid];
+            for (ID src = 0; src < nodeNum; ++src) {
+                auto srcVec = adjMat[src];
+                for (ID dst = 0; dst < src; ++dst) {
+                    Weight w = srcVec[mid] + midVec[dst];
+                    if (w < srcVec[dst]) { srcVec[dst] = adjMat.at(dst, src) = w; }
+                }
+            }
+        }
+    }
+
+private:
+    // the primitive floyd (for documentation only).
+    template<typename Weight = Length>
+    static void findAllPairsPaths(Arr2D<Weight> &adjMat) {
+        ID nodeNum = adjMat.size1();
+
+        for (ID mid = 0; mid < nodeNum; ++mid) {
+            for (ID src = 0; src < nodeNum; ++src) {
+                for (ID dst = 0; dst < nodeNum; ++dst) {
+                    Weight w = adjMat.at(src, mid) + adjMat.at(mid, dst);
+                    if (w < adjMat.at(src, dst)) { adjMat.at(src, dst) = w; }
+                }
+            }
+        }
+    }
+};
+
 }
 
 
-#endif // SMART_SZX_GATE_ASSIGNMENT_H
+#endif // SMART_SZX_GRAPH_COLORING_UTILITY_H

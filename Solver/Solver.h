@@ -4,8 +4,8 @@
 /// note  : 1.	
 ////////////////////////////////
 
-#ifndef SMART_SZX_GATE_ASSIGNMENT_SOLVER_H
-#define SMART_SZX_GATE_ASSIGNMENT_SOLVER_H
+#ifndef SMART_SZX_GRAPH_COLORING_SOLVER_H
+#define SMART_SZX_GRAPH_COLORING_SOLVER_H
 
 
 #include "Config.h"
@@ -206,7 +206,7 @@ public:
     Problem::Output output;
 
     struct { // auxiliary data for solver.
-        List<List<bool>> isCompatible; // isCompatible[f][g] is true if flight f is compatible with gate g.
+        List<List<ID>> adjList; // adjMat[i][j] is the j_th adjacent node of node i.
     } aux;
 
     Environment env;
@@ -221,4 +221,4 @@ public:
 }
 
 
-#endif // SMART_SZX_GATE_ASSIGNMENT_SOLVER_H
+#endif // SMART_SZX_GRAPH_COLORING_SOLVER_H

@@ -39,12 +39,8 @@ public:
     };
 
     struct InstanceTrait {
-        int horizonLen = 24 * 60;
-        Interval<int> gateNum = Interval<int>(60, Problem::MaxGateNum);
-        Interval<int> bridgeNum = Interval<int>(20, Problem::MaxBridgeNum);
-        Interval<int> flightNum = Interval<int>(100, Problem::MaxFlightNum);
-        Interval<int> incompatibleGateNumPerFlight = Interval<int>(0, 8);
-        Interval<int> turnaroundLen = Interval<int>(40, 8 * 60);
+        Interval<int> nodeNum = Interval<int>(5000, Problem::MaxNodeNum);
+        Interval<int> colorNum = Interval<int>(2000, Problem::MaxColorNum);
     };
     #pragma endregion Type
 
@@ -56,6 +52,7 @@ public:
     static String ProgramName() { return "Simulator.exe";  }
 
     enum ArgIndex { ExeName = 0, ArgStart };
+    enum TextFile { MaxColumnNum = 256 };
     #pragma endregion Constant
 
     #pragma region Constructor
@@ -84,6 +81,7 @@ public:
         InstanceTrait trait;
         generateInstance(trait);
     }
+    void convertDsjcInstance(const String &dsjcPath, const String &filename, int refColorNum);
     #pragma endregion Method
 
     #pragma region Field

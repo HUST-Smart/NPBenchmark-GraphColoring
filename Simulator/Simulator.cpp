@@ -18,6 +18,22 @@ using namespace std;
 
 namespace szx {
 
+// EXTEND[szx][5]: read it from InstanceList.txt.
+static const vector<String> instList({
+    "dsjc.n125e736c5",
+    "dsjc.n125e3891c17",
+    "dsjc.n125e6961c44",
+    "dsjc.n250e3218c8",
+    "dsjc.n250e15668c28",
+    "dsjc.n250e27897c72",
+    "dsjc.n500e12458c12",
+    "dsjc.n500e62624c47",
+    "dsjc.n500e112437c126",
+    "dsjc.n1000e49629c20",
+    "dsjc.n1000e249826c83",
+    "dsjc.n1000e449449c223"
+});
+
 void Simulator::initDefaultEnvironment() {
     Solver::Environment env;
     env.save(Env::DefaultEnvPath());
@@ -99,7 +115,7 @@ void Simulator::run(const String &envPath) {
 void Simulator::debug() {
     Task task;
     task.instSet = "";
-    task.instId = "rand.g4b2f8h480";
+    task.instId = "pmed1.n100e198p5";
     task.randSeed = "1500972793";
     //task.randSeed = to_string(RandSeed::generate());
     task.timeout = "180";
@@ -125,8 +141,6 @@ void Simulator::benchmark(int repeat) {
 
     random_device rd;
     mt19937 rgen(rd());
-    // EXTEND[szx][5]: read it from InstanceList.txt.
-    vector<String> instList({ "rand.g4b2f8h480", "rand.g80b25f200h1440" });
     for (int i = 0; i < repeat; ++i) {
         //shuffle(instList.begin(), instList.end(), rgen);
         for (auto inst = instList.begin(); inst != instList.end(); ++inst) {
@@ -153,8 +167,6 @@ void Simulator::parallelBenchmark(int repeat) {
 
     random_device rd;
     mt19937 rgen(rd());
-    // EXTEND[szx][5]: read it from InstanceList.txt.
-    vector<String> instList({ "rand.g4b2f8h480", "rand.g80b25f200h1440" });
     for (int i = 0; i < repeat; ++i) {
         //shuffle(instList.begin(), instList.end(), rgen);
         for (auto inst = instList.begin(); inst != instList.end(); ++inst) {
@@ -170,42 +182,59 @@ void Simulator::parallelBenchmark(int repeat) {
 void Simulator::generateInstance(const InstanceTrait &trait) {
     Random rand;
 
-    int gateNum = rand.pick(trait.gateNum.begin, trait.gateNum.end);
-    int flightNum = rand.pick(trait.flightNum.begin, trait.flightNum.end);
+    Problem::Input input;
+
+    // EXTEND[szx][5]: generate random instances.
+
+    ostringstream path;
+    path << InstanceDir() << "rand.n" << input.graph().nodenum()
+        << "e" << input.graph().edges().size() << "c" << input.colornum() << ".json";
+    save(path.str(), input);
+}
+
+void Simulator::convertDsjcInstance(const String &dsjcPath, const String &filename, int refColorNum) {
+    Log(Log::Info) << "converting " << dsjcPath << filename << endl;
+
+    ifstream ifs(dsjcPath + filename + ".col");
+
+    char c;
+    String s;
+    int nodeNum, edgeNum;
+
+    while (ifs >> c) {
+        if (c != 'c') { break; }
+        ifs.ignore(TextFile::MaxColumnNum, '\n');
+    }
+    ifs >> s >> nodeNum >> edgeNum;
+
+    Arr2D<int> edgeIndices(nodeNum, nodeNum, -1);
 
     Problem::Input input;
-    input.mutable_airport()->set_bridgenum(rand.pick(trait.bridgeNum.begin, trait.bridgeNum.end));
-    for (int g = 0; g < gateNum; ++g) {
-        auto &gate(*input.mutable_airport()->add_gates());
-        gate.set_id(g);
-        gate.set_mingap(30);
-    }
-    for (auto f = 0; f < flightNum; ++f) {
-        auto &flight(*input.add_flights());
-        flight.set_id(f);
+    input.set_colornum(refColorNum);
 
-        int turnaroudLen = rand.pick(trait.turnaroundLen.begin, trait.turnaroundLen.end);
-        if (turnaroudLen > 3 * 60) { // reduce long turnaround.
-            turnaroudLen = rand.pick(trait.turnaroundLen.begin, trait.turnaroundLen.end);
-        }
-        int turnaroundBegin = rand.pick(0, trait.horizonLen - turnaroudLen);
-        flight.mutable_turnaround()->set_begin(turnaroundBegin);
-        flight.mutable_turnaround()->set_end(turnaroundBegin + turnaroudLen);
+    auto &graph(*input.mutable_graph());
+    graph.set_nodenum(nodeNum);
+    for (int e = 0; e < edgeNum; ++e) {
+        int source, target;
+        ifs >> c >> source >> target;
+        --source;
+        --target;
 
-        int incompatibleGateNum = rand.pick(trait.incompatibleGateNumPerFlight.begin, trait.incompatibleGateNumPerFlight.end);
-        Sampling sample(rand, incompatibleGateNum);
-        List<int> pickedGates(incompatibleGateNum + 1);
-        for (auto g = 0; g < gateNum; ++g) { pickedGates[sample.isPicked()] = g; }
-        for (auto ig = 1; ig <= incompatibleGateNum; ++ig) {
-            flight.add_incompatiblegates(pickedGates[ig]);
+        if (source > target) { swap(source, target); }
+
+        if (edgeIndices.at(source, target) < 0) {
+            edgeIndices.at(source, target) = graph.edges().size();
+            auto &edge(*graph.add_edges());
+            edge.set_src(source);
+            edge.set_dst(target);
+        } else {
+            Log(Log::Warning) << "duplicated edge " << source << "-" << target << endl;
         }
     }
 
     ostringstream path;
-    path << InstanceDir() << "rand.g" << input.airport().gates().size()
-        << "b" << input.airport().bridgenum()
-        << "f" << input.flights().size()
-        << "h" << trait.horizonLen << ".json";
+    path << InstanceDir() << "dsjc.n" << input.graph().nodenum()
+        << "e" << input.graph().edges().size() << "c" << input.colornum() << ".json";
     save(path.str(), input);
 }
 

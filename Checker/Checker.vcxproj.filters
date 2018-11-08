@@ -21,19 +21,16 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\Solver\GateAssignment.pb.cc">
+    <ClCompile Include="..\Solver\GraphColoring.pb.cc">
       <Filter>Protocol</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\Solver\GateAssignment.pb.h">
-      <Filter>Protocol</Filter>
-    </ClInclude>
     <ClInclude Include="..\Solver\PbReader.h">
       <Filter>Protocol</Filter>
     </ClInclude>
-    <ClInclude Include="Visualizer.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="..\Solver\GraphColoring.pb.h">
+      <Filter>Protocol</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

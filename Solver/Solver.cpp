@@ -172,13 +172,13 @@ bool Solver::solve() {
 
     Log(LogSwitch::Szx::Framework) << "collect best result among all workers." << endl;
     int bestIndex = -1;
-    Length bestValue = 0;
+    Length bestValue = Problem::MaxColorNum;
     for (int i = 0; i < workerNum; ++i) {
         if (!success[i]) { continue; }
-        Log(LogSwitch::Szx::Framework) << "worker " << i << " got " << solutions[i].flightNumOnBridge << endl;
-        if (solutions[i].flightNumOnBridge <= bestValue) { continue; }
+        Log(LogSwitch::Szx::Framework) << "worker " << i << " got " << solutions[i].colorNum << endl;
+        if (solutions[i].colorNum >= bestValue) { continue; }
         bestIndex = i;
-        bestValue = solutions[i].flightNumOnBridge;
+        bestValue = solutions[i].colorNum;
     }
 
     env.rid = to_string(bestIndex);
@@ -195,7 +195,7 @@ void Solver::record() const {
 
     System::MemoryUsage mu = System::peakMemoryUsage();
 
-    Length obj = output.flightNumOnBridge;
+    Length obj = output.colorNum;
     Length checkerObj = -1;
     bool feasible = check(checkerObj);
 
@@ -204,16 +204,17 @@ void Solver::record() const {
         << env.rid << ","
         << env.instPath << ","
         << feasible << "," << (obj - checkerObj) << ","
-        << output.flightNumOnBridge << ","
+        << obj << ","
         << timer.elapsedSeconds() << ","
         << mu.physicalMemory << "," << mu.virtualMemory << ","
         << env.randSeed << ","
         << cfg.toBriefStr() << ","
-        << generation << "," << iteration << ","
-        << (100.0 * output.flightNumOnBridge / input.flights().size()) << "%,";
+        << generation << "," << iteration << ",";
 
     // record solution vector.
-    // EXTEND[szx][2]: save solution in log.
+    for (auto n = output.nodecolors().begin(); n != output.nodecolors().end(); ++n) {
+        log << *n << " ";
+    }
     log << endl;
 
     // append all text atomically.
@@ -223,7 +224,7 @@ void Solver::record() const {
     ofstream logFile(env.logPath, ios::app);
     logFile.seekp(0, ios::end);
     if (logFile.tellp() <= 0) {
-        logFile << "Time,ID,Instance,Feasible,ObjMatch,Width,Duration,PhysMem,VirtMem,RandSeed,Config,Generation,Iteration,Ratio,Solution" << endl;
+        logFile << "Time,ID,Instance,Feasible,ObjMatch,Color,Duration,PhysMem,VirtMem,RandSeed,Config,Generation,Iteration,Solution" << endl;
     }
     logFile << log.str();
     logFile.close();
@@ -235,9 +236,7 @@ bool Solver::check(Length &checkerObj) const {
     enum CheckerFlag {
         IoError = 0x0,
         FormatError = 0x1,
-        FlightNotAssignedError = 0x2,
-        IncompatibleAssignmentError = 0x4,
-        FlightOverlapError = 0x8
+        ColorConflictError = 0x2
     };
 
     checkerObj = System::exec("Checker.exe " + env.instPath + " " + env.solutionPathWithTime());
@@ -245,9 +244,7 @@ bool Solver::check(Length &checkerObj) const {
     checkerObj = ~checkerObj;
     if (checkerObj == CheckerFlag::IoError) { Log(LogSwitch::Checker) << "IoError." << endl; }
     if (checkerObj & CheckerFlag::FormatError) { Log(LogSwitch::Checker) << "FormatError." << endl; }
-    if (checkerObj & CheckerFlag::FlightNotAssignedError) { Log(LogSwitch::Checker) << "FlightNotAssignedError." << endl; }
-    if (checkerObj & CheckerFlag::IncompatibleAssignmentError) { Log(LogSwitch::Checker) << "IncompatibleAssignmentError." << endl; }
-    if (checkerObj & CheckerFlag::FlightOverlapError) { Log(LogSwitch::Checker) << "FlightOverlapError." << endl; }
+    if (checkerObj & CheckerFlag::ColorConflictError) { Log(LogSwitch::Checker) << "ColorConflictError." << endl; }
     return false;
     #else
     checkerObj = 0;
@@ -256,35 +253,33 @@ bool Solver::check(Length &checkerObj) const {
 }
 
 void Solver::init() {
-    aux.isCompatible.resize(input.flights().size(), List<bool>(input.airport().gates().size(), true));
-    ID f = 0;
-    for (auto flight = input.flights().begin(); flight != input.flights().end(); ++flight, ++f) {
-        for (auto ig = flight->incompatiblegates().begin(); ig != flight->incompatiblegates().end(); ++ig) {
-            aux.isCompatible[f][*ig] = false;
-        }
+    ID nodeNum = input.graph().nodenum();
+
+    aux.adjList.resize(nodeNum);
+    for (auto e = input.graph().edges().begin(); e != input.graph().edges().end(); ++e) {
+        // assume there is no duplicated edge.
+        aux.adjList.at(e->src()).push_back(e->dst());
+        aux.adjList.at(e->src()).push_back(e->dst());
     }
 }
 
 bool Solver::optimize(Solution &sln, ID workerId) {
     Log(LogSwitch::Szx::Framework) << "worker " << workerId << " starts." << endl;
 
-    ID gateNum = input.airport().gates().size();
-    ID bridgeNum = input.airport().bridgenum();
-    ID flightNum = input.flights().size();
+    ID nodeNum = input.graph().nodenum();
+    ID colorNum = input.colornum();
 
     // reset solution state.
     bool status = true;
-    auto &assignments(*sln.mutable_assignments());
-    assignments.Resize(flightNum, Problem::InvalidId);
-    sln.flightNumOnBridge = 0;
-
+    auto &nodeColors(*sln.mutable_nodecolors());
+    nodeColors.Resize(nodeNum, Problem::InvalidId);
 
     // TODO[0]: replace the following random assignment with your own algorithm.
-    for (ID f = 0; !timer.isTimeOut() && (f < flightNum); ++f) {
-        assignments[f] = rand.pick(gateNum);
-        if (assignments[f] < bridgeNum) { ++sln.flightNumOnBridge; } // record obj.
+    for (ID n = 0; !timer.isTimeOut() && (n < nodeNum); ++n) {
+        nodeColors[n] = rand.pick(colorNum);
     }
 
+    sln.colorNum = input.colornum(); // record obj.
 
     Log(LogSwitch::Szx::Framework) << "worker " << workerId << " ends." << endl;
     return status;
