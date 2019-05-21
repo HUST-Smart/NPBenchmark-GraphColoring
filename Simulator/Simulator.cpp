@@ -27,6 +27,8 @@ static const vector<String> instList({
     "dsjc.n250e15668c28",
     "dsjc.n250e27897c72",
     "dsjc.n500e12458c12",
+    "dsjc.n500e62624c49",
+    "dsjc.n500e62624c48",
     "dsjc.n500e62624c47",
     "dsjc.n500e112437c126",
     "dsjc.n1000e49629c20",
