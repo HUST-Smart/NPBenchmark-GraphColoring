@@ -24,30 +24,15 @@ namespace szx {
 class Problem {
     #pragma region Type
 public:
-    struct Input : public pb::GraphColoring::Input {
-        bool load(const String &path) { return pb::load(path, *this); }
-    };
-
-    struct Output : public pb::GraphColoring::Output {
-        bool save(const String &path, pb::Submission &submission) const {
-            std::ofstream ofs(path);
-            if (!ofs.is_open()) { return false; }
-
-            // TODO[0]: fill the submission information.
-            submission.set_author("szx");
-            submission.set_algorithm("rand");
-            submission.set_cpu("Intel Core i5-7400 3.00GHz");
-            submission.set_ram("16G 2400MHz");
-            submission.set_language("C++");
-            submission.set_compiler("VS2017");
-            submission.set_os("Windows 10");
-            submission.set_problem("GraphColoring");
-
-            ofs << protobufToJson(submission, false) << std::endl << protobufToJson(*this);
-            return true;
-        }
+    using Input = pb::GraphColoring::Input;
+    
+    struct Output {
+        auto nodecolors() const { return output.nodecolors(); }
+        auto nodecolors(ID n) const { return output.nodecolors(n); }
+        auto mutable_nodecolors() { return output.mutable_nodecolors(); }
 
         ID colorNum = 0;
+        pb::GraphColoring::Output output;
     };
     #pragma endregion Type
 
@@ -67,6 +52,24 @@ public:
 
     #pragma region Method
 public:
+    static bool loadInput(Input &input, const String &path) { return pb::load(path, input); }
+    static bool saveOutput(const Output &output, const String &path, pb::Submission &submission) {
+        std::ofstream ofs(path);
+        if (!ofs.is_open()) { return false; }
+
+        // TODO[0]: fill the submission information.
+        submission.set_author("szx");
+        submission.set_algorithm("rand");
+        submission.set_cpu("Intel Core i5-7400 3.00GHz");
+        submission.set_ram("16G 2400MHz");
+        submission.set_language("C++");
+        submission.set_compiler("VS2017");
+        submission.set_os("Windows 10");
+        submission.set_problem("GraphColoring");
+
+        ofs << protobufToJson(submission, false) << std::endl << protobufToJson(output.output);
+        return true;
+    }
     #pragma endregion Method
 
     #pragma region Field

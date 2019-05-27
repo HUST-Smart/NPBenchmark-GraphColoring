@@ -60,7 +60,7 @@ int Solver::Cli::run(int argc, char * argv[]) {
 
     Log(LogSwitch::Szx::Input) << "load instance " << env.instPath << " (seed=" << env.randSeed << ")." << endl;
     Problem::Input input;
-    if (!input.load(env.instPath)) { return -1; }
+    if (!Problem::loadInput(input, env.instPath)) { return -1; }
 
     Solver solver(input, env, cfg);
     solver.solve();
@@ -70,9 +70,9 @@ int Solver::Cli::run(int argc, char * argv[]) {
     submission.set_instance(env.friendlyInstName());
     submission.set_duration(to_string(solver.timer.elapsedSeconds()) + "s");
 
-    solver.output.save(env.slnPath, submission);
+    Problem::saveOutput(solver.output, env.slnPath, submission);
     #if SZX_DEBUG
-    solver.output.save(env.solutionPathWithTime(), submission);
+    Problem::saveOutput(solver.output, env.solutionPathWithTime(), submission);
     solver.record();
     #endif // SZX_DEBUG
 
