@@ -259,7 +259,7 @@ void Solver::init() {
     for (auto e = input.graph().edges().begin(); e != input.graph().edges().end(); ++e) {
         // assume there is no duplicated edge.
         aux.adjList.at(e->src()).push_back(e->dst());
-        aux.adjList.at(e->src()).push_back(e->dst());
+        aux.adjList.at(e->dst()).push_back(e->src());
     }
 }
 
