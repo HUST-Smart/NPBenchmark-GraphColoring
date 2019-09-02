@@ -1,16 +1,16 @@
-# 目录组织
+﻿# 目录组织
 
 - **Solver/**
   图着色问题的 Visual C++ 项目.
-  核心算法.
+  核心算法. 编译生成使用命令行传参指定输入输出文件路径等参数的可执行文件, 同时提供求解算法 API.
 
 - **Protocol/**
   - GraphColoring.proto
     图着色问题的输入输出数据定义文件.
 
 - **Simulator/**
-  提供算法交互接口的 Visual C++ 项目.
-  实现批量测试与结果展示等功能.
+  用于算法批量测试的 Visual C++ 项目.
+  自动将预设参数传递给核心算法, 实现批量测试与结果展示等功能.
 
 - **Checker/**
   图着色问题计算结果检查程序的 Visual C++ 项目.
@@ -55,12 +55,12 @@
 2. 在 `Problem.h` 中搜索 `TODO[0]`, 并在对应位置修改提交至测评系统的信息.
 
 
-## 编译链接
+## 编译链接运行
 
 1. 自己编译 protobuf 或者在 [NPBenchmark](https://github.com/HUST-Smart/NPBenchmark/releases/tag/v1.0) 或群共享下载 `protobuf3.6.1_vs2017_MT+MTd_x64.zip` 并解压至 `Lib` 目录.
 2. 运行 `Protocol/` 目录下的 `generate.bat` (未更改 `*.proto` 文件可跳过该步骤).
 3. 安装 gurobi 并在 [NPBenchmark](https://github.com/HUST-Smart/NPBenchmark/releases/tag/v1.0) 或群共享下载 `gurobi8.1.1_vs2017_MT+MTd+MD+MDd_x64.zip` 并解压至 `Lib` 目录. (不使用求解器可跳过该步骤)
-4. 打开根目录下的 Visual Studio 2017 解决方案文件 `IncrementalGraphDrawing.sln`, 设置输出选项为 Release x64, 生成解决方案.
+4. 打开根目录下的 Visual Studio 2017 解决方案文件 `GraphColoring.sln`, 设置输出选项为 Release x64, 生成解决方案，运行 Simulator 工程进行批量测试.
 
 
 
